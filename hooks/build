@@ -1,0 +1,27 @@
+#!/bin/sh
+
+CACHE_TAG=${CACHE_TAG:-$DOCKER_TAG}
+
+ver=$(echo "${CACHE_TAG}"|cut -d- -f2)
+if [ "$ver" ]; then
+    ver="-$ver"
+fi
+
+: > tags.txt
+for layer in base python3; do
+    tag=$layer$ver
+    echo "############################################################"
+    echo "### building layer '$layer' with tag '$tag'"
+    echo "### TAGVER=$ver"
+    echo "### creating '$DOCKER_REPO:$tag' with '$layer/Dockerfile'"
+    echo "############################################################"
+
+    docker build --build-arg "TAGVER=$ver" \
+                 -t $DOCKER_REPO:$tag "${layer:-.}"
+    res=$?
+    if [ $res -ne 0 ]; then
+        echo "Building layer $layer returned $res" >&2
+        exit $res
+    fi
+    echo "$tag" >> tags.txt
+done
