@@ -1,5 +1,5 @@
 ARG TAGVER=
-FROM apluslms/compile:base${TAGVER}
+FROM --platform=$TARGETPLATFORM apluslms/compile:base${TAGVER}
 
 RUN apt_install \
     python3 \

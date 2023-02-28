@@ -5,6 +5,9 @@ if [ "$ver" ]; then
     ver="-$ver"
 fi
 
+docker run --privileged --rm tonistiigi/binfmt --install all
+docker buildx create --use default
+
 : > tags.txt
 for layer in base python3; do
     tag=$layer$ver
@@ -14,8 +17,11 @@ for layer in base python3; do
     echo "### creating '$DOCKER_REPO:$tag' with '$layer/Dockerfile'"
     echo "############################################################"
 
-    docker build --build-arg "TAGVER=$ver" \
-                 -t $DOCKER_REPO:$tag "${layer:-.}"
+    docker buildx build \
+           --push \
+           --build-arg "TAGVER=$ver" \
+           --tag "$DOCKER_REPO":"$DOCKER_TAG" \
+           --platform linux/amd64,linux/arm64/v8 "${layer:-.}"
     res=$?
     if [ $res -ne 0 ]; then
         echo "Building layer $layer returned $res" >&2
